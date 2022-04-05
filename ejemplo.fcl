@@ -1,0 +1,165 @@
+/*
+	Example: A tip calculation FIS (fuzzy inference system)
+	Calculates tip based on 'servie' and 'food'
+
+	If you want to about this example (and fuzzy logic), please 
+	read Matlab's tutorial on fuzzy logic toolbox 
+	http://www.mathworks.com/access/helpdesk/help/pdf_doc/fuzzy/fuzzy.pdf
+
+									Pablo Cingolani 
+									pcingola@users.sourceforge.net
+*/
+
+FUNCTION_BLOCK tipper	// Block definition (there may be more than one block per file)
+
+VAR_INPUT				// Define input variables
+	distancia_al_hospital : REAL;
+	zona_de_herida : REAL;
+	gravedad : REAL;
+END_VAR
+
+VAR_OUTPUT				// Define output variable
+	nivel_de_gravedad : REAL;
+END_VAR
+
+FUZZIFY distancia_al_hospital			// Fuzzify input variable 'distancia_al_hospital': {'muy_cerca', 'cerca' , 'regular', 'lejana','muy_lejana'}
+	TERM muy_cerca := (0, 0) (0.5, 1) (1.2, 0);
+	TERM cerca := (0.8, 0) (1.5, 1) (2.2, 0);
+	TERM regular := (1.8, 0) (2.5, 1) (3.2, 0);
+	TERM lejana := (2.8, 0) (3.5, 1) (4.2, 0);
+	TERM muy_lejana := (3.8, 0) (4.5, 1) (5, 0);
+END_FUZZIFY
+
+FUZZIFY zona_de_herida			// Fuzzify input variable 'zona_de_herida': {'poco_grabe', 'regular' , 'grabe', 'muy_grabe'}
+	TERM poco_grabe := (0, 0) (0.5, 1) (1.2, 0);
+	TERM regular := (0.8, 0) (1.5, 1) (2.2, 0);
+	TERM grabe := (1.8, 0) (2.5, 1) (3.2, 0);
+	TERM muy_grabe := (2.8, 0) (3.5, 1) (4, 0);
+END_FUZZIFY
+
+FUZZIFY gravedad			// Fuzzify input variable 'gravedad': { 'muy_baja', 'baja' , 'mediana', 'alta','muy_alta' }
+	TERM muy_baja := (0, 0) (0.5, 1) (1.2, 0);
+	TERM baja := (0.8, 0) (1.5, 1) (2.2, 0);
+	TERM mediana := (1.8, 0) (2.5, 1) (3.2, 0);
+	TERM alta := (2.8, 0) (3.5, 1) (4.2, 0);
+	TERM muy_alta := (3.8, 0) (4.5, 1) (5, 0);
+END_FUZZIFY
+//-----------------------------------------------------
+DEFUZZIFY nivel_de_gravedad			// Defzzzify output variable 'tnivel_de_gravedadip' : {'muy_bajo', 'bajo' , 'regular', 'alto','muy_alto' }
+	TERM muy_bajo := (0, 0) (0.5, 1) (1.2, 0);
+	TERM bajo := (0.8, 0) (1.5, 1) (2.2, 0);
+	TERM regular := (1.8, 0) (2.5, 1) (3.2, 0);
+	TERM alto := (2.8, 0) (3.5, 1) (4.2, 0);
+	TERM muy_alto := (3.8, 0) (4.5, 1) (5, 0);
+	METHOD : COG;		// Use 'Center Of Gravity' defuzzification method
+	DEFAULT := 0;		// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;			// Use 'min' for 'and' (also implicit use 'max' for 'or' to fulfill DeMorgan's Law)
+	ACT : MIN;			// Use 'min' activation method
+	ACCU : MAX;			// Use 'max' accumulation method
+ 
+	RULE 1 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS poco_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS muy_bajo;
+	RULE 2 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS poco_grabe AND gravedad IS baja THEN nivel_de_gravedad IS bajo;
+	RULE 3 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS poco_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS bajo;
+	RULE 4 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS poco_grabe AND gravedad IS alta THEN nivel_de_gravedad IS bajo;
+	RULE 5 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS poco_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS regular;
+	RULE 6 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS regular AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 7 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS regular AND gravedad IS baja THEN nivel_de_gravedad IS bajo;
+	RULE 8 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS regular AND gravedad IS mediana THEN nivel_de_gravedad IS bajo;
+	RULE 9 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS regular AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 10 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS regular AND gravedad IS muy_alta THEN nivel_de_gravedad IS regular;
+	RULE 11 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 12 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS grabe AND gravedad IS baja THEN nivel_de_gravedad IS bajo;
+	RULE 13 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS grabe AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 14 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS grabe AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 15 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 16 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS muy_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 17 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS muy_grabe AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 18 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS muy_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 19 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS muy_grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 20 : IF distancia_al_hospital IS  muy_cerca AND zona_de_herida IS muy_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 21 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS poco_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 22 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS poco_grabe AND gravedad IS baja THEN nivel_de_gravedad IS bajo;
+	RULE 23 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS poco_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS bajo;
+	RULE 24 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS poco_grabe AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 25 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS poco_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS regular;
+	RULE 26 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS regular AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 27 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS regular AND gravedad IS baja THEN nivel_de_gravedad IS bajo;
+	RULE 28 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS regular AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 29 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS regular AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 30 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS regular AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 31 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 32 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS grabe AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 33 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS grabe AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 34 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 35 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 36 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS muy_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS regular;
+	RULE 37 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS muy_grabe AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 38 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS muy_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS alto;
+	RULE 39 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS muy_grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 40 : IF distancia_al_hospital IS  cerca AND zona_de_herida IS muy_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 41 : IF distancia_al_hospital IS  regular AND zona_de_herida IS poco_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 42 : IF distancia_al_hospital IS  regular AND zona_de_herida IS poco_grabe AND gravedad IS baja THEN nivel_de_gravedad IS bajo;
+	RULE 43 : IF distancia_al_hospital IS  regular AND zona_de_herida IS poco_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 44 : IF distancia_al_hospital IS  regular AND zona_de_herida IS poco_grabe AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 45 : IF distancia_al_hospital IS  regular AND zona_de_herida IS poco_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 46 : IF distancia_al_hospital IS  regular AND zona_de_herida IS regular AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 47 : IF distancia_al_hospital IS  regular AND zona_de_herida IS regular AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 48 : IF distancia_al_hospital IS  regular AND zona_de_herida IS regular AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 49 : IF distancia_al_hospital IS  regular AND zona_de_herida IS regular AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 50 : IF distancia_al_hospital IS  regular AND zona_de_herida IS regular AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 51 : IF distancia_al_hospital IS  regular AND zona_de_herida IS grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS regular;
+	RULE 52 : IF distancia_al_hospital IS  regular AND zona_de_herida IS grabe AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 53 : IF distancia_al_hospital IS  regular AND zona_de_herida IS grabe AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 54 : IF distancia_al_hospital IS  regular AND zona_de_herida IS grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 55 : IF distancia_al_hospital IS  regular AND zona_de_herida IS grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 56 : IF distancia_al_hospital IS  regular AND zona_de_herida IS muy_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS regular;
+	RULE 57 : IF distancia_al_hospital IS  regular AND zona_de_herida IS muy_grabe AND gravedad IS baja THEN nivel_de_gravedad IS alto;
+	RULE 58 : IF distancia_al_hospital IS  regular AND zona_de_herida IS muy_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS alto;
+	RULE 59 : IF distancia_al_hospital IS  regular AND zona_de_herida IS muy_grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 60 : IF distancia_al_hospital IS  regular AND zona_de_herida IS muy_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS muy_alto;
+	RULE 61 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS poco_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 62 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS poco_grabe AND gravedad IS baja THEN nivel_de_gravedad IS bajo;
+	RULE 63 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS poco_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 64 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS poco_grabe AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 65 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS poco_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 66 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS regular AND gravedad IS muy_baja THEN nivel_de_gravedad IS bajo;
+	RULE 67 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS regular AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 68 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS regular AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 69 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS regular AND gravedad IS alta THEN nivel_de_gravedad IS regular;
+	RULE 70 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS regular AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 71 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS regular;
+	RULE 72 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS grabe AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 73 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS grabe AND gravedad IS mediana THEN nivel_de_gravedad IS regular;
+	RULE 74 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 75 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 76 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS muy_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS regular;
+	RULE 77 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS muy_grabe AND gravedad IS baja THEN nivel_de_gravedad IS alto;
+	RULE 78 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS muy_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS alto;
+	RULE 79 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS muy_grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 80 : IF distancia_al_hospital IS  lejana AND zona_de_herida IS muy_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS muy_alto;
+	RULE 81 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS poco_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS regular;
+	RULE 82 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS poco_grabe AND gravedad IS baja THEN nivel_de_gravedad IS regular;
+	RULE 83 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS poco_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS alto;
+	RULE 84 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS poco_grabe AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 85 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS poco_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS alto;
+	RULE 86 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS regular AND gravedad IS muy_baja THEN nivel_de_gravedad IS regular;
+	RULE 87 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS regular AND gravedad IS baja THEN nivel_de_gravedad IS alto;
+	RULE 88 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS regular AND gravedad IS mediana THEN nivel_de_gravedad IS alto;
+	RULE 89 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS regular AND gravedad IS alta THEN nivel_de_gravedad IS alto;
+	RULE 90 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS regular AND gravedad IS muy_alta THEN nivel_de_gravedad IS muy_alto;
+	RULE 91 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS alto;
+	RULE 92 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS grabe AND gravedad IS baja THEN nivel_de_gravedad IS alto;
+	RULE 93 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS grabe AND gravedad IS mediana THEN nivel_de_gravedad IS alto;
+	RULE 94 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS grabe AND gravedad IS alta THEN nivel_de_gravedad IS muy_alto;
+	RULE 95 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS muy_alto;
+	RULE 96 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS muy_grabe AND gravedad IS muy_baja THEN nivel_de_gravedad IS alto;
+	RULE 97 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS muy_grabe AND gravedad IS baja THEN nivel_de_gravedad IS alto;
+	RULE 98 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS muy_grabe AND gravedad IS mediana THEN nivel_de_gravedad IS muy_alto;
+	RULE 99 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS muy_grabe AND gravedad IS alta THEN nivel_de_gravedad IS muy_alto;
+	RULE 100 : IF distancia_al_hospital IS  muy_lejana AND zona_de_herida IS muy_grabe AND gravedad IS muy_alta THEN nivel_de_gravedad IS muy_alto;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
